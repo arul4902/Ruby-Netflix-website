@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { RubishnaLogo } from './RubishnaLogo';
-import { Volume2, VolumeX } from 'lucide-react';
 
 interface IntroAnimationProps {
   onComplete: () => void;
@@ -12,16 +11,27 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
   forcePlay = false,
 }) => {
   const [phase, setPhase] = useState<'init' | 'monogram-zoom' | 'glow-sweep' | 'title-reveal' | 'fade-out'>('init');
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const hasTriggeredAudioRef = useRef(false);
 
-  // Synthesize original Rubishna cinematic chord using Web Audio API (Zero copyrighted audio)
+  // Synthesize original Rubishna cinematic chord using Web Audio API
   const playCinematicSound = () => {
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      audioContextRef.current = ctx;
+
+      let ctx = audioContextRef.current;
+      if (!ctx || ctx.state === 'closed') {
+        ctx = new AudioCtx();
+        audioContextRef.current = ctx;
+      }
+
+      // Resume context if mobile browser suspended it
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
 
       const now = ctx.currentTime;
 
@@ -33,7 +43,7 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
       subOsc.frequency.exponentialRampToValueAtTime(36, now + 2.2);
 
       subGain.gain.setValueAtTime(0.001, now);
-      subGain.gain.exponentialRampToValueAtTime(0.4, now + 0.3);
+      subGain.gain.exponentialRampToValueAtTime(0.45, now + 0.3);
       subGain.gain.exponentialRampToValueAtTime(0.001, now + 2.8);
 
       subOsc.connect(subGain);
@@ -56,7 +66,7 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
         filter.frequency.exponentialRampToValueAtTime(400, now + 2.5);
 
         gain.gain.setValueAtTime(0.001, now);
-        gain.gain.exponentialRampToValueAtTime(0.08, now + 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.09, now + 0.5);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
 
         osc.connect(filter);
@@ -82,7 +92,7 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
 
       const noiseGain = ctx.createGain();
       noiseGain.gain.setValueAtTime(0.0001, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.04, now + 0.8);
+      noiseGain.gain.exponentialRampToValueAtTime(0.045, now + 0.8);
       noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
 
       whiteNoise.connect(bandpass);
@@ -91,7 +101,7 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
       whiteNoise.start(now + 0.5);
       whiteNoise.stop(now + 2.2);
     } catch {
-      // Audio context might be restricted before user gesture; gracefully proceed
+      // Audio context policy fallback
     }
   };
 
@@ -102,11 +112,30 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
       return;
     }
 
-    // Sequence the cinematic phases
+    const triggerAudio = () => {
+      if (!hasTriggeredAudioRef.current) {
+        hasTriggeredAudioRef.current = true;
+        playCinematicSound();
+      } else if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(() => {});
+      }
+    };
+
+    // Play intro sound automatically on start
     const t0 = setTimeout(() => {
       setPhase('monogram-zoom');
-      if (soundEnabled) playCinematicSound();
+      triggerAudio();
     }, 100);
+
+    // Mobile gesture listeners: guarantee sound plays on mobile touch if browser required gesture
+    const handleGesture = () => {
+      triggerAudio();
+    };
+
+    window.addEventListener('touchstart', handleGesture, { passive: true });
+    window.addEventListener('touchend', handleGesture, { passive: true });
+    window.addEventListener('pointerdown', handleGesture, { passive: true });
+    window.addEventListener('click', handleGesture, { passive: true });
 
     const t1 = setTimeout(() => {
       setPhase('glow-sweep');
@@ -131,11 +160,15 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
       clearTimeout(t2);
       clearTimeout(t3);
       clearTimeout(t4);
+      window.removeEventListener('touchstart', handleGesture);
+      window.removeEventListener('touchend', handleGesture);
+      window.removeEventListener('pointerdown', handleGesture);
+      window.removeEventListener('click', handleGesture);
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => {});
       }
     };
-  }, [forcePlay, soundEnabled]);
+  }, [forcePlay, onComplete]);
 
   const handleSkip = () => {
     sessionStorage.setItem('rubishna_intro_completed', 'true');
@@ -144,6 +177,11 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
 
   return (
     <div
+      onClick={() => {
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().catch(() => {});
+        }
+      }}
       className={`fixed inset-0 z-50 bg-[#000000] flex flex-col items-center justify-center select-none overflow-hidden transition-opacity duration-700 ${
         phase === 'fade-out' ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
@@ -189,16 +227,8 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({
         </div>
       </div>
 
-      {/* Top right quick controls */}
+      {/* Top right skip button (No mute option; sound is always active) */}
       <div className="absolute top-6 right-6 flex items-center gap-3 z-10">
-        <button
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all backdrop-blur-md"
-          title={soundEnabled ? 'Mute Intro Sound' : 'Unmute Intro Sound'}
-        >
-          {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </button>
-
         <button
           onClick={handleSkip}
           className="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/25 border border-white/20 text-xs font-semibold uppercase tracking-widest text-white/90 hover:text-white transition-all backdrop-blur-md"

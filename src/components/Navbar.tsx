@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { CUSTOMER_DATA } from '../data/customer';
 import { RubishnaLogo } from './RubishnaLogo';
-import { Search, Music, Menu, X, ChevronDown, RefreshCw, LogOut, Sparkles, Dices } from 'lucide-react';
+import {
+  Search,
+  Music,
+  Menu,
+  X,
+  ChevronDown,
+  RefreshCw,
+  LogOut,
+  Sparkles,
+  Dices,
+  Home,
+  Film,
+  GraduationCap,
+  Clapperboard,
+  Camera,
+  Heart,
+} from 'lucide-react';
 import { uiSounds } from '../utils/soundEffects';
 
 interface NavbarProps {
@@ -37,15 +53,27 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
   const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'my-story', label: 'My Story' },
-    { id: 'college-era', label: 'College Era' },
-    { id: 'creator-mode', label: 'Creator Mode' },
-    { id: 'camera-roll', label: 'Camera Roll' },
-    { id: 'favourites', label: 'Favourites' },
-    { id: 'soundtrack', label: 'Soundtrack' },
-    { id: 'dreams', label: 'Dreams' },
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'my-story', label: 'My Story', icon: Film },
+    { id: 'college-era', label: 'College Era', icon: GraduationCap },
+    { id: 'creator-mode', label: 'Creator Mode', icon: Clapperboard },
+    { id: 'camera-roll', label: 'Camera Roll', icon: Camera },
+    { id: 'favourites', label: 'Favourites', icon: Heart },
+    { id: 'soundtrack', label: 'Soundtrack', icon: Music },
+    { id: 'dreams', label: 'Dreams', icon: Sparkles },
   ];
 
   const handleLinkClick = (id: string) => {
@@ -56,26 +84,32 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <nav
-        className={`fixed top-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out px-4 sm:px-8 md:px-12 py-3 sm:py-4 flex items-center justify-between ${
+      <header
+        className={`fixed top-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out px-3 sm:px-8 md:px-12 py-2.5 sm:py-4 flex items-center justify-between ${
           isScrolled
             ? 'bg-[#141414]/95 backdrop-blur-md shadow-2xl border-b border-white/5'
-            : 'bg-gradient-to-b from-black/90 via-black/50 to-transparent'
+            : 'bg-gradient-to-b from-black/95 via-black/60 to-transparent'
         }`}
       >
-        {/* Left: Monogram Logo and Main Navigation */}
-        <div className="flex items-center gap-8">
+        {/* Left: Responsive Logo and Desktop Links */}
+        <div className="flex items-center gap-6 lg:gap-8 shrink-0">
           <button
             onClick={() => handleLinkClick('home')}
             onMouseEnter={() => uiSounds.hover()}
-            className="focus:outline-none transition-transform duration-200 active:scale-95"
+            className="focus:outline-none transition-transform duration-200 active:scale-95 shrink-0"
             aria-label="Rubishna Home"
           >
-            <RubishnaLogo variant="full" size="md" />
+            {/* Desktop: size md; Mobile: size sm */}
+            <span className="hidden sm:inline-block">
+              <RubishnaLogo variant="full" size="md" />
+            </span>
+            <span className="sm:hidden inline-block">
+              <RubishnaLogo variant="full" size="sm" />
+            </span>
           </button>
 
           {/* Desktop Navigation Links */}
-          <ul className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <ul className="hidden md:flex items-center gap-5 lg:gap-6 text-sm font-medium">
             {navLinks.map((link) => (
               <li key={link.id}>
                 <button
@@ -94,8 +128,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </ul>
         </div>
 
-        {/* Right: Search, Audio Toggle, Profile Avatar, Mobile Menu Trigger */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        {/* Right: Actions and Mobile Menu Button */}
+        <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
           {/* Search Button */}
           <button
             onClick={() => {
@@ -103,14 +137,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               onOpenSearch();
             }}
             onMouseEnter={() => uiSounds.hover()}
-            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors focus:outline-none"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors focus:outline-none shrink-0"
             aria-label="Search Rubi's Streaming Universe"
             title="Search episodes & movies"
           >
-            <Search size={19} />
+            <Search size={18} />
           </button>
 
-          {/* Innovation: Surprise Me Quick Button */}
+          {/* Surprise Me Quick Button (Tablet/Desktop) */}
           {onOpenSurpriseMe && (
             <button
               onClick={() => {
@@ -118,38 +152,41 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenSurpriseMe();
               }}
               onMouseEnter={() => uiSounds.hover()}
-              className="p-2 text-white/80 hover:text-[#E50914] hover:bg-white/10 rounded-full transition-colors focus:outline-none"
+              className="hidden sm:flex p-2 text-white/80 hover:text-[#E50914] hover:bg-white/10 rounded-full transition-colors focus:outline-none shrink-0"
               aria-label="Pick Random Episode"
               title="Surprise Me (Random Episode)"
             >
-              <Dices size={20} />
+              <Dices size={19} />
             </button>
           )}
 
           {/* Soundtrack Quick Controller */}
           <button
-            onClick={onToggleAudio}
-            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border text-xs font-semibold tracking-wider transition-all duration-300 focus:outline-none ${
+            onClick={() => {
+              uiSounds.click();
+              onToggleAudio();
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-semibold tracking-wider transition-all duration-300 focus:outline-none shrink-0 ${
               isPlayingAudio
-                ? 'bg-[#E50914] text-white border-[#E50914] shadow-[0_0_15px_rgba(229,9,20,0.6)] animate-pulse'
+                ? 'bg-[#E50914] text-white border-[#E50914] shadow-[0_0_12px_rgba(229,9,20,0.6)]'
                 : 'bg-white/5 text-[#B3B3B3] border-white/15 hover:border-white/30 hover:text-white'
             }`}
-            title="Toggle Rubi's Original Soundtrack"
+            title="Toggle Soundtrack"
           >
-            <Music size={14} className={isPlayingAudio ? 'animate-spin' : ''} />
-            <span className="hidden sm:inline">
+            <Music size={13} className={isPlayingAudio ? 'animate-spin text-white' : ''} />
+            <span className="hidden md:inline">
               {isPlayingAudio ? 'Soundtrack Playing' : 'Soundtrack'}
             </span>
           </button>
 
-          {/* Profile Dropdown */}
-          <div className="relative">
+          {/* Profile Dropdown (Desktop/Tablet) */}
+          <div className="relative hidden sm:block">
             <button
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="flex items-center gap-1.5 group p-1 focus:outline-none"
+              className="flex items-center gap-1 group p-1 focus:outline-none shrink-0"
               aria-label="Open Profile Menu"
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-md overflow-hidden border border-white/20 group-hover:border-[#E50914] transition-colors shadow-md">
+              <div className="w-8 h-8 rounded-md overflow-hidden border border-white/20 group-hover:border-[#E50914] transition-colors shadow-md">
                 <img
                   src={CUSTOMER_DATA.photos.profile}
                   alt={CUSTOMER_DATA.nickname}
@@ -213,49 +250,147 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Mobile Menu Toggle Button */}
+          {/* Prominent Mobile Menu Toggle Button (Always visible on mobile) */}
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-white/80 hover:text-white focus:outline-none"
+            onClick={() => {
+              uiSounds.click();
+              setIsMobileMenuOpen(!isMobileMenuOpen);
+            }}
+            className={`md:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all duration-200 focus:outline-none shrink-0 ${
+              isMobileMenuOpen
+                ? 'bg-[#E50914] text-white border-[#E50914] shadow-[0_0_12px_rgba(229,9,20,0.6)]'
+                : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
+            }`}
             aria-label="Toggle navigation menu"
           >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            <span className="text-[11px] font-bold uppercase tracking-wider">
+              {isMobileMenuOpen ? 'Close' : 'Menu'}
+            </span>
           </button>
         </div>
-      </nav>
+      </header>
 
-      {/* Mobile Drawer Menu */}
+      {/* Full-Screen Mobile Drawer Menu (z-50, sits above bottom player) */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-20 bg-black/95 backdrop-blur-xl md:hidden pt-20 px-6 pb-10 flex flex-col justify-between animate-in fade-in duration-200">
-          <ul className="flex flex-col gap-4 text-lg font-semibold text-[#B3B3B3]">
-            {navLinks.map((link) => (
-              <li key={link.id}>
-                <button
-                  onClick={() => handleLinkClick(link.id)}
-                  className={`w-full text-left py-2 transition-colors flex items-center justify-between ${
-                    activeSection === link.id ? 'text-[#E50914] font-bold' : 'hover:text-white'
-                  }`}
-                >
-                  <span>{link.label}</span>
-                  {activeSection === link.id && <span className="w-2 h-2 rounded-full bg-[#E50914]" />}
-                </button>
-              </li>
-            ))}
-          </ul>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile Navigation Menu"
+          className="fixed inset-0 z-50 bg-[#121212]/98 backdrop-blur-2xl md:hidden flex flex-col justify-between overflow-y-auto animate-in fade-in duration-200 p-5 select-none"
+        >
+          {/* Top Bar: Profile Showcase & Close Button */}
+          <div className="flex items-center justify-between pb-5 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-[#E50914] shadow-lg shrink-0">
+                <img
+                  src={CUSTOMER_DATA.photos.profile}
+                  alt={CUSTOMER_DATA.name}
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-white leading-tight">
+                  {CUSTOMER_DATA.name}
+                </h3>
+                <p className="text-[11px] text-[#E50914] font-bold uppercase tracking-wider">
+                  Season 19 • Lead Character
+                </p>
+              </div>
+            </div>
 
-          <div className="border-t border-white/15 pt-6 flex flex-col gap-3">
             <button
               onClick={() => {
+                uiSounds.click();
                 setIsMobileMenuOpen(false);
-                onReplayIntro();
               }}
-              className="flex items-center gap-3 py-2 text-sm text-[#B3B3B3] hover:text-white"
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              aria-label="Close menu"
             >
-              <RefreshCw size={16} />
-              <span>Replay Cinematic Intro</span>
+              <X size={20} />
             </button>
-            <p className="text-xs text-white/40 tracking-wider">
-              RUBISHNA • Season 19 • Personalized Streaming Platform
+          </div>
+
+          {/* Center: Full Navigation Grid / List */}
+          <div className="py-4 space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#B3B3B3] mb-2 px-3">
+              Explore Rubishna Universe
+            </p>
+            <div className="grid grid-cols-1 gap-1">
+              {navLinks.map((link) => {
+                const IconComponent = link.icon;
+                const isActive = activeSection === link.id;
+
+                return (
+                  <button
+                    key={link.id}
+                    onClick={() => handleLinkClick(link.id)}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between ${
+                      isActive
+                        ? 'bg-[#E50914] text-white shadow-lg'
+                        : 'text-[#B3B3B3] hover:text-white hover:bg-white/5 active:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <IconComponent size={18} className={isActive ? 'text-white' : 'text-[#E50914]'} />
+                      <span>{link.label}</span>
+                    </div>
+                    {isActive && (
+                      <span className="text-[10px] font-black uppercase bg-black/40 px-2 py-0.5 rounded">
+                        Active
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom Actions: Surprise Me, Intro, Switch Profile, Footer */}
+          <div className="border-t border-white/10 pt-4 space-y-2">
+            {/* Quick Surprise Me Button */}
+            {onOpenSurpriseMe && (
+              <button
+                onClick={() => {
+                  uiSounds.easterEgg();
+                  setIsMobileMenuOpen(false);
+                  onOpenSurpriseMe();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-950 to-black border border-red-800/40 text-xs font-black uppercase text-white shadow-md active:scale-98 transition-transform"
+              >
+                <Dices size={16} className="text-[#E50914]" />
+                <span>🎲 Surprise Me (Random Episode)</span>
+              </button>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+              <button
+                onClick={() => {
+                  uiSounds.click();
+                  setIsMobileMenuOpen(false);
+                  onReplayIntro();
+                }}
+                className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#B3B3B3] hover:text-white flex items-center justify-center gap-2 transition-colors font-medium"
+              >
+                <RefreshCw size={13} />
+                <span>Replay Intro</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  uiSounds.click();
+                  setIsMobileMenuOpen(false);
+                  onSwitchProfile();
+                }}
+                className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#B3B3B3] hover:text-white flex items-center justify-center gap-2 transition-colors font-medium"
+              >
+                <LogOut size={13} />
+                <span>Switch Profile</span>
+              </button>
+            </div>
+
+            <p className="text-[10px] text-center text-white/40 pt-2 font-mono">
+              RUBISHNA • SEASON 19 • STREAMING LIVE
             </p>
           </div>
         </div>
